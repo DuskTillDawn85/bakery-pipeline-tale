@@ -1,38 +1,61 @@
-# bakery-pipeline-tale
+# 烘焙流水线物语 | Bakery Pipeline Tale
+核心框架**照搬原作**：
+传送带进料 → 拖拽指令排步骤 → 小人自动执行 → 按规则输出成品通关
+把职场办公文，换成**做奶茶、裱蛋糕、分甜品**，小学生、初中生超有代入感，还能自然练编程逻辑：顺序、循环、条件判断、加减、分类排序。
 
-This template should help get you started developing with Vue 3 in Vite.
+## 一、整体场景设定
+画面：温馨烘焙店后厨
+- 左侧：**原料传送带** 不停送出原料卡片
+  牛奶、奶油、草莓、巧克力、面包坯、蛋挞皮、糖包、冰块
+- 中间：**操作台**（小朋友拖拽指令拼流程）
+- 右侧：**出餐传送带** 按规则送出做好的甜品
+- 主角：小烘焙师小人，按你排的指令自动走流程干活
 
-## Recommended IDE Setup
+## 二、可用基础指令（对标HRM指令，小孩一看就懂）
+1. **取原料** 👉 对应 INBOX
+2. **放成品** 👉 对应 OUTBOX
+3. **加一份糖** 👉 加法
+4. **去掉一份冰** 👉 减法
+5. **重复一步** 👉 循环 JUMP
+6. **如果是草莓就走这边** 👉 条件判断
+7. **暂存台面** 👉 临时变量，手里拿不下先放操作台
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+## 三、关卡设计（由易到难，适配小学→初中）
+### 第1关：基础接单（练顺序逻辑）
+传送带依次出：面包坯、奶油、草莓
+任务：按顺序取原料 → 做成草莓蛋糕 → 放到出餐口
+玩法：只需要按顺序拖：取原料→放成品，理解**顺序执行**
 
-## Recommended Browser Setup
+### 第2关：同款批量制作（练循环）
+传送带连续送 5 份：牛奶+茶包
+任务：重复做5杯原味奶茶，不用一遍一遍排流程
+玩法：用**循环指令**，一段步骤重复跑，启蒙编程「循环」概念
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+### 第3关：口味分类（练条件判断）
+传送带随机混出：草莓、巧克力、芒果原料
+任务：
+- 拿到草莓 → 放左边做草莓蛋糕
+- 拿到巧克力 → 放右边做巧克力蛋糕
+玩法：用**条件分支**，if 是什么就走哪条路，编程核心逻辑
 
-## Customize configuration
+### 第4关：甜度调配（练简单运算）
+每份奶茶默认1份糖
+传送带送来「多加1糖」「少放1糖」指令卡
+任务：自动计算最终糖量，按甜度出餐
+玩法：对应编程**变量、加减运算**
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+### 第5关：数量分拣（练排序+筛选）
+传送带混着：3个蛋挞、5个泡芙、2个面包
+任务：按数量从小到大依次出餐，多余的甜品过滤剔除
+玩法：综合**判断、对比、筛选**，初中逻辑完全够用
 
-## Project Setup
+## 四、和原版HRM一模一样的核心体验
+1. 不用打字、不用写代码，**纯拖拽指令**
+2. 一步一步执行，能看着小人做错、自己排查改流程（练debug思维）
+3. 难度循序渐进，小学玩入门逻辑，初中玩循环、条件、排序算法
+4. 场景可爱无压力，比枯燥的办公职场更适合孩子
 
-```sh
-pnpm install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
-pnpm dev
-```
-
-### Compile and Minify for Production
-
-```sh
-pnpm build
-```
+## 五、额外适配小朋友的小设定
+- 失败不扣分，只会提示「配方不对，重新排步骤吧」
+- 画风卡通暖色调，甜品造型可爱
+- 关卡名字都很有趣：新手烘焙、奶茶流水线、蛋糕分类师、甜品加工厂
