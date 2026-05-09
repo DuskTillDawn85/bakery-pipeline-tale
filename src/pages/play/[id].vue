@@ -1,10 +1,13 @@
 <script setup>
+import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import Level1View from './level1/Level1View.vue'
 
 const route = useRoute()
 const router = useRouter()
 
-const levelId = route.params.id;
+const levelId = computed(() => `${route.params.id ?? ''}`)
+const levelNumber = computed(() => parseInt(levelId.value, 10))
 
 const goBack = () => {
   router.push('/levels')
@@ -21,8 +24,10 @@ const goBack = () => {
         当前关卡：{{ levelId }}
       </h2>
     </div>
-    
-    <div class="room-container">
+
+    <Level1View v-if="levelNumber === 1" />
+
+    <div v-else class="room-container">
       <div class="wall">
         <div class="window"></div>
         <div class="clock"></div>
