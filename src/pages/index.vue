@@ -10,7 +10,7 @@ const enterGame = () => {
 </script>
 
 <template>
-  <div class="w-screen h-screen cursor-pointer overflow-hidden" @click="enterGame">
+  <div class="w-full h-full cursor-pointer overflow-hidden" @click="enterGame">
     <div class="relative w-full h-full">
       <img :src="landingImage" alt="Bakery Pipeline Tale" class="w-full h-full object-cover">
       <p class="text-2xl text-white absolute top-[82%] left-1/2 -translate-x-1/2 -translate-y-1/2 text-center animate-pulse">

@@ -57,8 +57,8 @@ const goBack = () => {
 
 <style scoped lang="scss">
 .play-page {
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   background-color: #f5e6d3;

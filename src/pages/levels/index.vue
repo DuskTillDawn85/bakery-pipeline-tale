@@ -65,14 +65,15 @@ const goBack = () => {
 
 <style scoped lang="scss">
 .levels-page {
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   background-color: #fff9e6;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 2rem;
   box-sizing: border-box;
+  overflow: hidden;
 
   .header {
     width: 100%;
@@ -114,6 +115,9 @@ const goBack = () => {
     gap: 1.5rem;
     width: 100%;
     max-width: 600px;
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 2rem;
 
     .level-item {
       display: flex;
