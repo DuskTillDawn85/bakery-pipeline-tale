@@ -23,7 +23,7 @@ const enterGame = () => {
   height: 100%;
   overflow: hidden;
   position: relative;
-  background-image: url("../images/landing_bg.png");
+  background-image: url("../assets/images/landing_bg.png");
   background-size: cover;
   background-position: center;
   cursor: pointer;
