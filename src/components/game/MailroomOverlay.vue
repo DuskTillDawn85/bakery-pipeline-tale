@@ -6,6 +6,10 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  availableOps: {
+    type: Array,
+    default: null,
+  },
   title: {
     type: String,
     default: '收发室',
@@ -16,10 +20,14 @@ const props = defineProps({
   },
 })
 
-const availableOps = computed(() => [
-  { op: props.api.OP.INBOX, title: 'INBOX', desc: '取原料（从输入传送带拿一个）' },
-  { op: props.api.OP.OUTBOX, title: 'OUTBOX', desc: '放成品（把手里的原料放到输出带）' },
-])
+const availableOps = computed(() => {
+  if (props.availableOps && props.availableOps.length > 0) return props.availableOps
+  if (props.api.availableOps && props.api.availableOps.length > 0) return props.api.availableOps
+  return [
+    { op: props.api.OP.INBOX, title: 'INBOX', desc: '取原料（从输入传送带拿一个）' },
+    { op: props.api.OP.OUTBOX, title: 'OUTBOX', desc: '放成品（把手里的原料放到输出带）' },
+  ]
+})
 
 const steps = ref([])
 const state = ref(props.api.getState())
@@ -198,20 +206,19 @@ function reset() {
 
 <style scoped lang="scss">
 .overlay {
-  width: 100%;
+  position: absolute;
+  right: 0;
+  width: 300px;
   height: 100%;
-  display: flex;
-  justify-content: flex-end;
-  pointer-events: none;
+  flex-shrink: 0;
 
   .overlay__panel {
-    width: 360px;
+    width: 100%;
     height: 100%;
     background-color: rgba(242, 235, 220, 0.92);
     border-left: 1px solid rgba(0, 0, 0, 0.18);
     display: flex;
     flex-direction: column;
-    pointer-events: auto;
 
     .panel__header {
       padding: 1.1rem 1rem;
@@ -448,4 +455,3 @@ function reset() {
   }
 }
 </style>
-

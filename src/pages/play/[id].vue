@@ -60,14 +60,16 @@ const goBack = () => {
 
 <template>
   <div class="play">
-    <div class="play__stage" ref="containerRef"></div>
-    <MailroomOverlay
-      v-if="overlayApiRef"
-      class="play__overlay"
-      :api="overlayApiRef"
-      :title="levelTitle"
-      :mission="`目标：把输入传送带上的所有原料搬到输出传送带。`"
-    />
+    <div class="play__layout">
+      <div class="play__stage" ref="containerRef"></div>
+      <MailroomOverlay
+        v-if="overlayApiRef"
+        class="play__panel"
+        :api="overlayApiRef"
+        :title="levelTitle"
+        :mission="`目标：把输入传送带上的所有原料搬到输出传送带。`"
+      />
+    </div>
     <button class="play__back" type="button" @click="goBack">
       返回关卡
     </button>
@@ -82,14 +84,20 @@ const goBack = () => {
   position: relative;
   background-color: #0f172a;
 
-  .play__stage {
+  .play__layout {
     width: 100%;
+    height: 100%;
+    display: flex;
+    overflow: hidden;
+  }
+
+  .play__stage {
+    flex: 1;
     height: 100%;
   }
 
-  .play__overlay {
-    position: absolute;
-    inset: 0;
+  .play__panel {
+    height: 100%;
   }
 
   .play__back {
