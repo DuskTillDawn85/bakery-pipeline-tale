@@ -26,12 +26,12 @@ export function createMailroomScene(ctx, config) {
   const roomHeight = 3.2
 
   const beltDepth = 5.2
-  const beltWidth = 1.1
+  const beltWidth = 0.5
   const beltHeight = 0.28
   const beltCapacity = 10
 
-  const inboxX = -1.0
-  const outboxX = 1.0
+  const inboxX = -1.5
+  const outboxX = 1.5
   const beltZ = 0
   const moveDuration = 0.55
 
@@ -167,7 +167,7 @@ export function createMailroomScene(ctx, config) {
     }
 
     const pickup = inboxBelt.getPickupPoint(new THREE.Vector3())
-    pickup.x -= 0.45
+    pickup.x -= 0.1
     await moveWorkerTo(pickup)
 
     const taken = inboxBelt.takeNext()
@@ -191,7 +191,7 @@ export function createMailroomScene(ctx, config) {
     }
 
     const drop = outboxBelt.getDropPoint(new THREE.Vector3())
-    drop.x += 0.45
+    drop.x += 0.1
     await moveWorkerTo(drop)
 
     const mesh = worker.drop()

@@ -9,10 +9,11 @@ export function createTopDownRoomCamera(options) {
 
   const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100)
 
+  const x = roomWidth * 0.1
   const y = roomHeight * 0.95
-  const z = roomDepth * 0.55
-  camera.position.set(0, y, z)
-  camera.lookAt(0, 1, 0)
+  const z = roomDepth * 0.6
+  camera.position.set(x, y, z)
+  camera.lookAt(x, 1, 0)
   camera.updateProjectionMatrix()
 
   return {

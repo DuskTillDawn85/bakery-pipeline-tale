@@ -36,7 +36,7 @@ export function createConveyorBelt(options) {
   group.add(base)
 
   const rail = new THREE.Mesh(
-    new THREE.BoxGeometry(width + 0.06, 0.06, depth + 0.06),
+    new THREE.BoxGeometry(width, 0.06, depth + 0.06),
     new THREE.MeshStandardMaterial({
       color: 0x111827,
       roughness: 0.9,
@@ -115,6 +115,7 @@ export function createConveyorBelt(options) {
     const p = slots[0] ?? new THREE.Vector3()
     target.copy(p)
     target.applyMatrix4(group.matrixWorld)
+    target.x += 0.65
     target.y = 0
     return target
   }
@@ -124,6 +125,7 @@ export function createConveyorBelt(options) {
     const p = slots[idx] ?? new THREE.Vector3()
     target.copy(p)
     target.applyMatrix4(group.matrixWorld)
+    target.x -= 0.65
     target.y = 0
     return target
   }
