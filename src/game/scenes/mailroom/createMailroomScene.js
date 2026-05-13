@@ -1,8 +1,8 @@
 import { Container, Graphics, Text } from 'pixi.js'
 import { createConveyorBelt } from '../../entities/createConveyorBelt'
 import { createWorker } from '../../entities/createWorker'
-import { createEmitter } from '../../utils/createEmitter'
-import { OP } from '../../logic/ops'
+import { createEmitter } from '../../core/createEmitter'
+import { OP } from '../../gameplay/ops'
 
 function createText(text, style) {
   try {
@@ -12,33 +12,21 @@ function createText(text, style) {
   }
 }
 
-export function createMailroomScene(ctx, config) {
-  const roomWidth = 8
-  const roomDepth = 8
+function createMailroomView(app, options) {
+  const roomWidth = options.roomWidth
+  const roomDepth = options.roomDepth
+  const beltDepth = options.beltDepth
+  const beltWidth = options.beltWidth
+  const beltCapacity = options.beltCapacity
+  const inboxX = options.inboxX
+  const outboxX = options.outboxX
+  const beltY = options.beltY
+  const beltColor = options.beltColor
 
-  const beltDepth = 5.2
-  const beltWidth = 0.5
-  const beltCapacity = 10
-
-  const inboxX = -1.5
-  const outboxX = 1.0
-  const beltY = 0
-  const moveDuration = 0.55
-
-  const inboxItems = config?.inboxItems ?? []
-  const expectedOutCount = inboxItems.length
-  const availableOps =
-    config?.availableOps ??
-    [
-      { op: OP.INBOX, title: 'INBOX', desc: '取原料（从输入传送带拿一个）' },
-      { op: OP.OUTBOX, title: 'OUTBOX', desc: '放成品（把手里的原料放到输出带）' },
-    ]
-
-  const emitter = createEmitter()
   const root = new Container()
   const world = new Container()
   root.addChild(world)
-  ctx.app.stage.addChild(root)
+  app.stage.addChild(root)
 
   function updateViewSize(width, height) {
     const margin = 48
@@ -48,8 +36,6 @@ export function createMailroomScene(ctx, config) {
     world.scale.set(scale)
     world.position.set(width / 2, height / 2)
   }
-
-  updateViewSize(ctx.width, ctx.height)
 
   const background = new Graphics()
   background.beginFill(0xf3e6d3, 1)
@@ -61,7 +47,7 @@ export function createMailroomScene(ctx, config) {
   const inboxBelt = createConveyorBelt({
     width: beltWidth,
     depth: beltDepth,
-    color: 0xb37d4a,
+    color: beltColor,
     itemCapacity: beltCapacity,
   })
   inboxBelt.setPosition(inboxX, beltY)
@@ -70,7 +56,7 @@ export function createMailroomScene(ctx, config) {
   const outboxBelt = createConveyorBelt({
     width: beltWidth,
     depth: beltDepth,
-    color: 0xb37d4a,
+    color: beltColor,
     itemCapacity: beltCapacity,
   })
   outboxBelt.setPosition(outboxX, beltY)
@@ -98,6 +84,53 @@ export function createMailroomScene(ctx, config) {
   outboxLabel.anchor?.set?.(0.5)
   hud.addChild(outboxLabel)
 
+  function refreshHud(hudState) {
+    const s = world.scale.x || 1
+    inboxLabel.text = `INBOX ${hudState.inboxCount}/${hudState.expectedOutCount}`
+    outboxLabel.text = `OUTBOX ${hudState.outboxCount}/${hudState.expectedOutCount}`
+
+    inboxLabel.position.set(world.position.x + inboxX * s, world.position.y + (-beltDepth / 2 - 0.7) * s)
+    outboxLabel.position.set(world.position.x + outboxX * s, world.position.y + (-beltDepth / 2 - 0.7) * s)
+  }
+
+  function setSize(width, height, hudState) {
+    updateViewSize(width, height)
+    if (hudState) refreshHud(hudState)
+  }
+
+  function dispose() {
+    inboxBelt.dispose()
+    outboxBelt.dispose()
+    worker.dispose()
+    app.stage.removeChild(root)
+    root.destroy({ children: true })
+  }
+
+  return {
+    root,
+    world,
+    inboxBelt,
+    outboxBelt,
+    worker,
+    setSize,
+    refreshHud,
+    dispose,
+  }
+}
+
+function createMailroomRunner(options) {
+  const config = options.config
+  const emitter = options.emitter
+  const view = options.view
+  const inboxItems = options.inboxItems
+  const expectedOutCount = options.expectedOutCount
+  const availableOps = options.availableOps
+  const moveDuration = options.moveDuration
+
+  const inboxBelt = view.inboxBelt
+  const outboxBelt = view.outboxBelt
+  const worker = view.worker
+
   const state = {
     status: 'idle',
     pointer: -1,
@@ -110,12 +143,11 @@ export function createMailroomScene(ctx, config) {
   }
 
   function refreshHud() {
-    const s = world.scale.x || 1
-    inboxLabel.text = `INBOX ${state.inboxCount}/${expectedOutCount}`
-    outboxLabel.text = `OUTBOX ${state.outboxCount}/${expectedOutCount}`
-
-    inboxLabel.position.set(world.position.x + inboxX * s, world.position.y + (-beltDepth / 2 - 0.7) * s)
-    outboxLabel.position.set(world.position.x + outboxX * s, world.position.y + (-beltDepth / 2 - 0.7) * s)
+    view.refreshHud({
+      inboxCount: state.inboxCount,
+      outboxCount: state.outboxCount,
+      expectedOutCount,
+    })
   }
 
   function updateState(partial) {
@@ -274,8 +306,11 @@ export function createMailroomScene(ctx, config) {
   reset()
 
   function setSize(width, height) {
-    updateViewSize(width, height)
-    refreshHud()
+    view.setSize(width, height, {
+      inboxCount: state.inboxCount,
+      outboxCount: state.outboxCount,
+      expectedOutCount,
+    })
   }
 
   function update(dt) {
@@ -283,11 +318,7 @@ export function createMailroomScene(ctx, config) {
   }
 
   function dispose() {
-    inboxBelt.dispose()
-    outboxBelt.dispose()
-    worker.dispose()
-    ctx.app.stage.removeChild(root)
-    root.destroy({ children: true })
+    view.dispose()
   }
 
   const api = {
@@ -305,4 +336,52 @@ export function createMailroomScene(ctx, config) {
     dispose,
     api,
   }
+}
+
+export function createMailroomScene(ctx, config) {
+  const roomWidth = 8
+  const roomDepth = 8
+
+  const beltDepth = 5.2
+  const beltWidth = 0.5
+  const beltCapacity = 10
+
+  const inboxX = -1.5
+  const outboxX = 1.0
+  const beltY = 0
+  const moveDuration = 0.55
+
+  const inboxItems = config?.inboxItems ?? []
+  const expectedOutCount = inboxItems.length
+  const availableOps =
+    config?.availableOps ??
+    [
+      { op: OP.INBOX, title: 'INBOX', desc: '取原料（从输入传送带拿一个）' },
+      { op: OP.OUTBOX, title: 'OUTBOX', desc: '放成品（把手里的原料放到输出带）' },
+    ]
+
+  const emitter = createEmitter()
+  const view = createMailroomView(ctx.app, {
+    roomWidth,
+    roomDepth,
+    beltDepth,
+    beltWidth,
+    beltCapacity,
+    inboxX,
+    outboxX,
+    beltY,
+    beltColor: 0xb37d4a,
+  })
+
+  view.setSize(ctx.width, ctx.height)
+
+  return createMailroomRunner({
+    config,
+    emitter,
+    view,
+    inboxItems,
+    expectedOutCount,
+    availableOps,
+    moveDuration,
+  })
 }

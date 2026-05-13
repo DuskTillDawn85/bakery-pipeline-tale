@@ -1,4 +1,4 @@
-import { OP } from '../../logic/ops'
+import { OP } from '../../gameplay/ops'
 import { createLevel2InboxItems } from './level2Items'
 
 export function createLevel2Config() {
@@ -11,4 +11,3 @@ export function createLevel2Config() {
     successMessage: '恭喜通关：你成功处理了更繁忙的收发室。',
   }
 }
-

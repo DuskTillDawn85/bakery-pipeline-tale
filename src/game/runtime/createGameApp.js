@@ -11,6 +11,15 @@ function createResizeObserver(container, onResize) {
   return ro
 }
 
+function normalizeSceneController(sceneCtl) {
+  return {
+    api: sceneCtl?.api ?? null,
+    setSize: (...args) => sceneCtl?.setSize?.(...args),
+    update: (...args) => sceneCtl?.update?.(...args),
+    dispose: (...args) => sceneCtl?.dispose?.(...args),
+  }
+}
+
 export async function createGameApp(container, createScene) {
   const rect = container.getBoundingClientRect()
   let width = Math.max(1, Math.floor(rect.width))
@@ -20,13 +29,14 @@ export async function createGameApp(container, createScene) {
   const pixi = await createPixiApp(container, { width, height, dpr })
   const app = pixi.app
 
-  const sceneCtl = createScene({ width, height, dpr, app })
+  const sceneCtlRaw = await Promise.resolve(createScene({ width, height, dpr, app }))
+  const sceneCtl = normalizeSceneController(sceneCtlRaw)
 
   function setSize(nextWidth, nextHeight) {
     width = nextWidth
     height = nextHeight
     dpr = Math.min(window.devicePixelRatio || 1, 1.5)
-    sceneCtl.setSize?.(width, height, dpr)
+    sceneCtl.setSize(width, height, dpr)
     pixi.setSize(width, height, dpr)
   }
 
@@ -39,7 +49,7 @@ export async function createGameApp(container, createScene) {
   function onTick() {
     if (!running) return
     const dt = Math.min((app.ticker.deltaMS || 0) / 1000, 0.05)
-    sceneCtl.update?.(dt)
+    sceneCtl.update(dt)
   }
 
   app.ticker.add(onTick)
@@ -58,7 +68,7 @@ export async function createGameApp(container, createScene) {
   function dispose() {
     stop()
     ro.disconnect()
-    sceneCtl.dispose?.()
+    sceneCtl.dispose()
     pixi.destroy()
   }
 
@@ -69,3 +79,4 @@ export async function createGameApp(container, createScene) {
     sceneCtl,
   }
 }
+

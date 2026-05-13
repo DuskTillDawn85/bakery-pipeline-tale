@@ -1,4 +1,4 @@
-import { OP } from '../../logic/ops'
+import { OP } from '../../gameplay/ops'
 import { createLevel1InboxItems } from './level1Items'
 
 export function createLevel1Config() {
@@ -11,4 +11,3 @@ export function createLevel1Config() {
     successMessage: '恭喜通关：所有原料都被搬运到输出传送带。',
   }
 }
-
