@@ -7,12 +7,16 @@ export function createRenderer(container) {
     powerPreference: 'high-performance',
   })
 
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5))
   renderer.shadowMap.enabled = true
   renderer.shadowMap.type = THREE.PCFShadowMap
   renderer.outputColorSpace = THREE.SRGBColorSpace
   renderer.toneMapping = THREE.ACESFilmicToneMapping
   renderer.toneMappingExposure = 1.0
+
+  renderer.domElement.style.width = '100%'
+  renderer.domElement.style.height = '100%'
+  renderer.domElement.style.display = 'block'
 
   container.appendChild(renderer.domElement)
 

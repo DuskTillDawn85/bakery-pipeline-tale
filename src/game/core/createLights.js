@@ -18,7 +18,7 @@ export function createRoomLights(options) {
   dir.position.set(2.8, roomHeight + 2.2, 2.8)
   dir.target.position.set(0, 0, 0)
   dir.castShadow = true
-  dir.shadow.mapSize.set(1024, 1024)
+  dir.shadow.mapSize.set(512, 512)
   dir.shadow.camera.near = 0.5
   dir.shadow.camera.far = 20
   dir.shadow.camera.left = -roomWidth
