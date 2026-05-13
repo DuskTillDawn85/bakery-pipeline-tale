@@ -66,7 +66,7 @@ export function createMailroomScene(ctx, config) {
     width: beltWidth,
     depth: beltDepth,
     height: beltHeight,
-    color: 0x1f2937,
+    color: 0xb37d4a,
     itemCapacity: beltCapacity,
   })
   inboxBelt.group.position.set(inboxX, 0, beltZ)
@@ -76,7 +76,7 @@ export function createMailroomScene(ctx, config) {
     width: beltWidth,
     depth: beltDepth,
     height: beltHeight,
-    color: 0x111827,
+    color: 0xb37d4a,
     itemCapacity: beltCapacity,
   })
   outboxBelt.group.position.set(outboxX, 0, beltZ)

@@ -18,7 +18,7 @@ export function createConveyorBelt(options) {
   const width = options?.width ?? 0.9
   const depth = options?.depth ?? 4.2
   const height = options?.height ?? 0.25
-  const color = options?.color ?? 0x2c3e50
+  const color = options?.color ?? 0x56311b
   const itemCapacity = options?.itemCapacity ?? 6
 
   const group = new THREE.Group()
@@ -27,8 +27,8 @@ export function createConveyorBelt(options) {
     new THREE.BoxGeometry(width, height, depth),
     new THREE.MeshStandardMaterial({
       color,
-      roughness: 0.95,
-      metalness: 0.05,
+      roughness: 0.75,
+      metalness: 0.1,
     }),
   )
   base.position.y = height / 2
@@ -38,9 +38,9 @@ export function createConveyorBelt(options) {
   const rail = new THREE.Mesh(
     new THREE.BoxGeometry(width, 0.06, depth + 0.06),
     new THREE.MeshStandardMaterial({
-      color: 0x111827,
-      roughness: 0.9,
-      metalness: 0.1,
+      color: 0x2a2a2a,
+      roughness: 0.8,
+      metalness: 0.2,
     }),
   )
   rail.position.y = height + 0.03
