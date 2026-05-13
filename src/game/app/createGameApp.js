@@ -1,5 +1,4 @@
-import * as THREE from 'three'
-import { createRenderer } from '../core/createRenderer'
+import { createPixiApp } from '../engine/pixi/createPixiApp'
 
 function createResizeObserver(container, onResize) {
   const ro = new ResizeObserver(() => {
@@ -12,65 +11,55 @@ function createResizeObserver(container, onResize) {
   return ro
 }
 
-export function createGameApp(container, createScene) {
-  const renderer = createRenderer(container)
-  const timer = new THREE.Timer()
-  timer.connect(document)
-
+export async function createGameApp(container, createScene) {
   const rect = container.getBoundingClientRect()
   let width = Math.max(1, Math.floor(rect.width))
   let height = Math.max(1, Math.floor(rect.height))
+  let dpr = Math.min(window.devicePixelRatio || 1, 1.5)
 
-  const sceneCtl = createScene({ width, height })
-  const scene = sceneCtl.scene
-  const camera = sceneCtl.camera
+  const pixi = await createPixiApp(container, { width, height, dpr })
+  const app = pixi.app
 
-  function render() {
-    renderer.render(scene, camera)
-  }
+  const sceneCtl = createScene({ width, height, dpr, app })
 
   function setSize(nextWidth, nextHeight) {
     width = nextWidth
     height = nextHeight
-    renderer.setSize(width, height, false)
-    sceneCtl.setSize?.(width, height)
-    render()
+    dpr = Math.min(window.devicePixelRatio || 1, 1.5)
+    sceneCtl.setSize?.(width, height, dpr)
+    pixi.setSize(width, height, dpr)
   }
 
   const ro = createResizeObserver(container, setSize)
   setSize(width, height)
 
-  let raf = 0
   let running = false
+  app.ticker.stop()
 
-  function tick() {
+  function onTick() {
     if (!running) return
-    timer.update()
-    const dt = Math.min(timer.getDelta(), 0.05)
+    const dt = Math.min((app.ticker.deltaMS || 0) / 1000, 0.05)
     sceneCtl.update?.(dt)
-    render()
-    raf = requestAnimationFrame(tick)
   }
+
+  app.ticker.add(onTick)
 
   function start() {
     if (running) return
     running = true
-    timer.update()
-    tick()
+    app.ticker.start()
   }
 
   function stop() {
     running = false
-    cancelAnimationFrame(raf)
+    app.ticker.stop()
   }
 
   function dispose() {
     stop()
     ro.disconnect()
     sceneCtl.dispose?.()
-    timer.disconnect()
-    renderer.dispose()
-    renderer.domElement?.remove?.()
+    pixi.destroy()
   }
 
   return {

@@ -1,38 +1,28 @@
-import * as THREE from 'three'
-import { createTopDownRoomCamera } from '../../core/createCamera'
-import { createRoomLights } from '../../core/createLights'
-import { createRoom } from '../../objects/createRoom'
+import { Container, Graphics, Text } from 'pixi.js'
 import { createConveyorBelt } from '../../entities/createConveyorBelt'
 import { createWorker } from '../../entities/createWorker'
 import { createEmitter } from '../../utils/createEmitter'
 import { OP } from '../../logic/ops'
 
-function disposeScene(root) {
-  root.traverse((obj) => {
-    if (!obj.isMesh) return
-    obj.geometry?.dispose?.()
-    const mat = obj.material
-    if (Array.isArray(mat)) {
-      mat.forEach((m) => m?.dispose?.())
-    } else {
-      mat?.dispose?.()
-    }
-  })
+function createText(text, style) {
+  try {
+    return new Text(text, style)
+  } catch {
+    return new Text({ text, style })
+  }
 }
 
 export function createMailroomScene(ctx, config) {
   const roomWidth = 8
   const roomDepth = 8
-  const roomHeight = 3.2
 
   const beltDepth = 5.2
   const beltWidth = 0.5
-  const beltHeight = 0.28
   const beltCapacity = 10
 
   const inboxX = -1.5
-  const outboxX = 1.5
-  const beltZ = 0
+  const outboxX = 1.0
+  const beltY = 0
   const moveDuration = 0.55
 
   const inboxItems = config?.inboxItems ?? []
@@ -45,46 +35,68 @@ export function createMailroomScene(ctx, config) {
     ]
 
   const emitter = createEmitter()
-  const scene = new THREE.Scene()
-  scene.background = new THREE.Color(0x1f2937)
+  const root = new Container()
+  const world = new Container()
+  root.addChild(world)
+  ctx.app.stage.addChild(root)
 
-  const cameraCtl = createTopDownRoomCamera({
-    width: ctx.width,
-    height: ctx.height,
-    roomWidth,
-    roomDepth,
-    roomHeight,
-  })
+  function updateViewSize(width, height) {
+    const margin = 48
+    const usableW = Math.max(1, width - margin * 2)
+    const usableH = Math.max(1, height - margin * 2)
+    const scale = Math.min(usableW / roomWidth, usableH / roomDepth)
+    world.scale.set(scale)
+    world.position.set(width / 2, height / 2)
+  }
 
-  const lights = createRoomLights({ roomWidth, roomDepth, roomHeight })
-  scene.add(lights)
+  updateViewSize(ctx.width, ctx.height)
 
-  const room = createRoom({ roomWidth, roomDepth, roomHeight })
-  scene.add(room)
+  const background = new Graphics()
+  background.beginFill(0xf3e6d3, 1)
+  background.lineStyle(0.06, 0x000000, 0.18)
+  background.drawRoundedRect(-roomWidth / 2, -roomDepth / 2, roomWidth, roomDepth, 0.35)
+  background.endFill()
+  world.addChild(background)
 
   const inboxBelt = createConveyorBelt({
     width: beltWidth,
     depth: beltDepth,
-    height: beltHeight,
     color: 0xb37d4a,
     itemCapacity: beltCapacity,
   })
-  inboxBelt.group.position.set(inboxX, 0, beltZ)
-  scene.add(inboxBelt.group)
+  inboxBelt.setPosition(inboxX, beltY)
+  world.addChild(inboxBelt.container)
 
   const outboxBelt = createConveyorBelt({
     width: beltWidth,
     depth: beltDepth,
-    height: beltHeight,
     color: 0xb37d4a,
     itemCapacity: beltCapacity,
   })
-  outboxBelt.group.position.set(outboxX, 0, beltZ)
-  scene.add(outboxBelt.group)
+  outboxBelt.setPosition(outboxX, beltY)
+  world.addChild(outboxBelt.container)
 
   const worker = createWorker()
   worker.setPosition(0, 0)
-  scene.add(worker.group)
+  world.addChild(worker.container)
+
+  const hud = new Container()
+  root.addChild(hud)
+
+  const hudStyle = {
+    fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto',
+    fontSize: 14,
+    fontWeight: '900',
+    fill: 0x111827,
+  }
+
+  const inboxLabel = createText('', hudStyle)
+  inboxLabel.anchor?.set?.(0.5)
+  hud.addChild(inboxLabel)
+
+  const outboxLabel = createText('', hudStyle)
+  outboxLabel.anchor?.set?.(0.5)
+  hud.addChild(outboxLabel)
 
   const state = {
     status: 'idle',
@@ -97,11 +109,19 @@ export function createMailroomScene(ctx, config) {
     carryingName: '',
   }
 
-  let moveResolve = null
+  function refreshHud() {
+    const s = world.scale.x || 1
+    inboxLabel.text = `INBOX ${state.inboxCount}/${expectedOutCount}`
+    outboxLabel.text = `OUTBOX ${state.outboxCount}/${expectedOutCount}`
+
+    inboxLabel.position.set(world.position.x + inboxX * s, world.position.y + (-beltDepth / 2 - 0.7) * s)
+    outboxLabel.position.set(world.position.x + outboxX * s, world.position.y + (-beltDepth / 2 - 0.7) * s)
+  }
 
   function updateState(partial) {
     Object.assign(state, partial)
     emitter.emit({ ...state })
+    refreshHud()
   }
 
   function reset() {
@@ -117,8 +137,7 @@ export function createMailroomScene(ctx, config) {
 
     if (worker.state.carrying) {
       const dropped = worker.drop()
-      dropped.geometry?.dispose?.()
-      dropped.material?.dispose?.()
+      dropped?.gfx?.destroy?.()
     }
     inboxBelt.setItems(inboxItems)
     outboxBelt.setItems([])
@@ -131,7 +150,7 @@ export function createMailroomScene(ctx, config) {
       result: 'fail',
       message,
       pointer: -1,
-      carryingName: worker.state.carrying?.userData?.item?.name ?? '',
+      carryingName: worker.state.carrying?.item?.name ?? '',
       inboxCount: inboxBelt.state.items.length,
       outboxCount: outboxBelt.state.items.length,
     })
@@ -150,10 +169,7 @@ export function createMailroomScene(ctx, config) {
   }
 
   function moveWorkerTo(target, duration = moveDuration) {
-    return new Promise((resolve) => {
-      moveResolve = resolve
-      worker.moveTo(target, duration)
-    })
+    return worker.moveTo(target, duration)
   }
 
   async function doInbox() {
@@ -166,9 +182,8 @@ export function createMailroomScene(ctx, config) {
       return false
     }
 
-    const pickup = inboxBelt.getPickupPoint(new THREE.Vector3())
-    pickup.x -= 0.1
-    await moveWorkerTo(pickup)
+    const pickup = inboxBelt.getPickupPoint({ x: 0, y: 0 })
+    await moveWorkerTo({ x: pickup.x - 0.1, y: pickup.y })
 
     const taken = inboxBelt.takeNext()
     if (!taken) {
@@ -176,7 +191,7 @@ export function createMailroomScene(ctx, config) {
       return false
     }
 
-    worker.pick(taken.mesh)
+    worker.pick(taken)
     updateState({
       carryingName: taken.item.name,
       inboxCount: inboxBelt.state.items.length,
@@ -190,20 +205,18 @@ export function createMailroomScene(ctx, config) {
       return false
     }
 
-    const drop = outboxBelt.getDropPoint(new THREE.Vector3())
-    drop.x += 0.1
-    await moveWorkerTo(drop)
+    const drop = outboxBelt.getDropPoint({ x: 0, y: 0 })
+    await moveWorkerTo({ x: drop.x + 0.1, y: drop.y })
 
-    const mesh = worker.drop()
-    if (!mesh) {
+    const taken = worker.drop()
+    if (!taken) {
       setFail('手里没有原料，无法 OUTBOX')
       return false
     }
 
-    const ok = outboxBelt.put(mesh)
+    const ok = outboxBelt.put(taken)
     if (!ok) {
-      mesh.geometry?.dispose?.()
-      mesh.material?.dispose?.()
+      taken.gfx?.destroy?.()
       setFail('输出传送带已满，无法继续 OUTBOX')
       return false
     }
@@ -261,23 +274,20 @@ export function createMailroomScene(ctx, config) {
   reset()
 
   function setSize(width, height) {
-    cameraCtl.updateAspect(width, height)
+    updateViewSize(width, height)
+    refreshHud()
   }
 
   function update(dt) {
-    const moveDone = worker.update(dt)
-    if (moveDone && moveResolve) {
-      const resolve = moveResolve
-      moveResolve = null
-      resolve()
-    }
+    worker.update(dt)
   }
 
   function dispose() {
     inboxBelt.dispose()
     outboxBelt.dispose()
     worker.dispose()
-    disposeScene(scene)
+    ctx.app.stage.removeChild(root)
+    root.destroy({ children: true })
   }
 
   const api = {
@@ -290,12 +300,9 @@ export function createMailroomScene(ctx, config) {
   }
 
   return {
-    scene,
-    camera: cameraCtl.camera,
     setSize,
     update,
     dispose,
     api,
   }
 }
-

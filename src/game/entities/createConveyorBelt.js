@@ -1,151 +1,142 @@
-import * as THREE from 'three'
+import { Container, Graphics } from 'pixi.js'
 
-function createItemMesh(item) {
-  const geo = new THREE.BoxGeometry(0.38, 0.22, 0.38)
-  const mat = new THREE.MeshStandardMaterial({
-    color: item.color ?? 0xffffff,
-    roughness: 0.7,
-    metalness: 0.05,
-  })
-  const mesh = new THREE.Mesh(geo, mat)
-  mesh.castShadow = true
-  mesh.receiveShadow = true
-  mesh.userData.item = item
-  return mesh
+function lerp(a, b, t) {
+  return a + (b - a) * t
 }
 
 export function createConveyorBelt(options) {
   const width = options?.width ?? 0.9
   const depth = options?.depth ?? 4.2
-  const height = options?.height ?? 0.25
   const color = options?.color ?? 0x56311b
   const itemCapacity = options?.itemCapacity ?? 6
+  const railColor = options?.railColor ?? 0x2a2a2a
 
-  const group = new THREE.Group()
+  const container = new Container()
 
-  const base = new THREE.Mesh(
-    new THREE.BoxGeometry(width, height, depth),
-    new THREE.MeshStandardMaterial({
-      color,
-      roughness: 0.75,
-      metalness: 0.1,
-    }),
-  )
-  base.position.y = height / 2
-  base.receiveShadow = true
-  group.add(base)
+  const base = new Graphics()
+  base.beginFill(color, 1)
+  base.drawRoundedRect(-width / 2, -depth / 2, width, depth, 0.12)
+  base.endFill()
+  container.addChild(base)
 
-  const rail = new THREE.Mesh(
-    new THREE.BoxGeometry(width, 0.06, depth + 0.06),
-    new THREE.MeshStandardMaterial({
-      color: 0x2a2a2a,
-      roughness: 0.8,
-      metalness: 0.2,
-    }),
-  )
-  rail.position.y = height + 0.03
-  rail.receiveShadow = true
-  group.add(rail)
+  const rails = new Graphics()
+  rails.beginFill(railColor, 1)
+  rails.drawRect(-width / 2, -depth / 2 - 0.08, width, 0.08)
+  rails.drawRect(-width / 2, depth / 2, width, 0.08)
+  rails.endFill()
+  container.addChild(rails)
 
-  const itemsGroup = new THREE.Group()
-  itemsGroup.position.y = height + 0.12
-  group.add(itemsGroup)
+  const itemsContainer = new Container()
+  container.addChild(itemsContainer)
 
   const slots = []
   const padding = 0.35
   for (let i = 0; i < itemCapacity; i += 1) {
     const t = itemCapacity === 1 ? 0.5 : i / (itemCapacity - 1)
-    const z = THREE.MathUtils.lerp(-depth / 2 + padding, depth / 2 - padding, t)
-    slots.push(new THREE.Vector3(0, 0, z))
+    const y = lerp(-depth / 2 + padding, depth / 2 - padding, t)
+    slots.push({ x: 0, y })
   }
 
   const state = {
     items: [],
-    meshes: [],
+    sprites: [],
+    x: 0,
+    y: 0,
+  }
+
+  function setPosition(x, y) {
+    state.x = x
+    state.y = y
+    container.position.set(x, y)
   }
 
   function layout() {
-    state.meshes.forEach((mesh, idx) => {
-      const p = slots[Math.min(idx, slots.length - 1)]
-      mesh.position.set(p.x, p.y, p.z)
+    state.sprites.forEach((gfx, idx) => {
+      const p = slots[Math.min(idx, slots.length - 1)] ?? { x: 0, y: 0 }
+      gfx.position.set(p.x, p.y)
     })
+  }
+
+  function createItemGfx(item) {
+    const gfx = new Graphics()
+    gfx.beginFill(item.color ?? 0xffffff, 1)
+    gfx.drawRoundedRect(-0.18, -0.18, 0.36, 0.36, 0.08)
+    gfx.endFill()
+    return gfx
   }
 
   function setItems(items) {
     clear()
     items.forEach((item) => {
-      const mesh = createItemMesh(item)
-      itemsGroup.add(mesh)
       state.items.push(item)
-      state.meshes.push(mesh)
+      const gfx = createItemGfx(item)
+      state.sprites.push(gfx)
+      itemsContainer.addChild(gfx)
     })
     layout()
   }
 
   function clear() {
-    state.meshes.forEach((m) => {
-      itemsGroup.remove(m)
-      m.geometry?.dispose?.()
-      m.material?.dispose?.()
-    })
+    state.sprites.forEach((g) => g.destroy({ children: true }))
     state.items = []
-    state.meshes = []
+    state.sprites = []
+    itemsContainer.removeChildren()
   }
 
   function takeNext() {
     if (state.items.length === 0) return null
     const item = state.items.shift()
-    const mesh = state.meshes.shift()
-    itemsGroup.remove(mesh)
+    const gfx = state.sprites.shift()
+    if (gfx) itemsContainer.removeChild(gfx)
     layout()
-    return { item, mesh }
+    return { item, gfx }
   }
 
-  function put(mesh) {
+  function put(taken) {
     if (state.items.length >= itemCapacity) return false
-    const item = mesh.userData.item
-    state.items.push(item)
-    state.meshes.push(mesh)
-    itemsGroup.add(mesh)
+    state.items.push(taken.item)
+    state.sprites.push(taken.gfx)
+    itemsContainer.addChild(taken.gfx)
     layout()
     return true
   }
 
-  function getPickupPoint(target = new THREE.Vector3()) {
-    const p = slots[0] ?? new THREE.Vector3()
-    target.copy(p)
-    target.applyMatrix4(group.matrixWorld)
-    target.x += 0.65
-    target.y = 0
+  function getPickupPoint(target = { x: 0, y: 0 }) {
+    const p = slots[0] ?? { x: 0, y: 0 }
+    target.x = state.x + p.x + width / 2 + 0.65
+    target.y = state.y + p.y
     return target
   }
 
-  function getDropPoint(target = new THREE.Vector3()) {
+  function getDropPoint(target = { x: 0, y: 0 }) {
     const idx = Math.min(state.items.length, slots.length - 1)
-    const p = slots[idx] ?? new THREE.Vector3()
-    target.copy(p)
-    target.applyMatrix4(group.matrixWorld)
-    target.x -= 0.65
-    target.y = 0
+    const p = slots[idx] ?? { x: 0, y: 0 }
+    target.x = state.x + p.x - width / 2 - 0.65
+    target.y = state.y + p.y
     return target
   }
 
-  function dispose() {
-    clear()
-    base.geometry?.dispose?.()
-    base.material?.dispose?.()
-    rail.geometry?.dispose?.()
-    rail.material?.dispose?.()
+  function getItemSlots() {
+    return state.items.map((item, idx) => {
+      const p = slots[Math.min(idx, slots.length - 1)] ?? { x: 0, y: 0 }
+      return {
+        item,
+        x: state.x + p.x,
+        y: state.y + p.y,
+      }
+    })
   }
 
   return {
-    group,
     state,
+    container,
+    setPosition,
     setItems,
     takeNext,
     put,
     getPickupPoint,
     getDropPoint,
-    dispose,
+    getItemSlots,
+    dispose: () => container.destroy({ children: true }),
   }
 }

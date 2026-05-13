@@ -1,74 +1,52 @@
-import * as THREE from 'three'
+import { Container, Graphics } from 'pixi.js'
 
 export function createWorker() {
-  const group = new THREE.Group()
+  let moveResolve = null
+  const container = new Container()
 
-  const bodyMat = new THREE.MeshStandardMaterial({
-    color: 0xffffff,
-    roughness: 0.85,
-    metalness: 0.05,
-  })
-  const headMat = new THREE.MeshStandardMaterial({
-    color: 0xffe7c4,
-    roughness: 0.85,
-    metalness: 0.02,
-  })
+  const body = new Graphics()
+  body.beginFill(0xffffff, 1)
+  body.drawCircle(0, 0, 0.24)
+  body.endFill()
+  container.addChild(body)
 
-  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.26, 0.6, 16), bodyMat)
-  body.position.y = 0.3
-  body.castShadow = true
-  group.add(body)
+  const eyes = new Graphics()
+  eyes.beginFill(0x111827, 1)
+  eyes.drawCircle(-0.07, -0.05, 0.03)
+  eyes.drawCircle(0.07, -0.05, 0.03)
+  eyes.endFill()
+  container.addChild(eyes)
 
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 18, 18), headMat)
-  head.position.y = 0.78
-  head.castShadow = true
-  group.add(head)
-
-  const eyeMat = new THREE.MeshStandardMaterial({
-    color: 0x111827,
-    roughness: 0.6,
-    metalness: 0.1,
-  })
-  const eyeGeo = new THREE.SphereGeometry(0.03, 12, 12)
-  const leftEye = new THREE.Mesh(eyeGeo, eyeMat)
-  leftEye.position.set(-0.06, 0.82, 0.19)
-  group.add(leftEye)
-  const rightEye = new THREE.Mesh(eyeGeo, eyeMat)
-  rightEye.position.set(0.06, 0.82, 0.19)
-  group.add(rightEye)
-
-  const hand = new THREE.Group()
-  hand.position.set(0.32, 0.45, 0.08)
-  group.add(hand)
+  const carry = new Container()
+  carry.position.set(0, -0.55)
+  container.addChild(carry)
 
   const state = {
+    x: 0,
+    y: 0,
     carrying: null,
     moving: false,
-    moveFrom: new THREE.Vector3(),
-    moveTo: new THREE.Vector3(),
+    moveFrom: { x: 0, y: 0 },
+    moveTo: { x: 0, y: 0 },
     moveElapsed: 0,
     moveDuration: 0,
   }
 
-  function setPosition(x, z) {
-    group.position.set(x, 0, z)
-  }
-
-  function faceTowards(target) {
-    const dir = new THREE.Vector3().subVectors(target, group.position)
-    dir.y = 0
-    if (dir.lengthSq() < 1e-6) return
-    const yaw = Math.atan2(dir.x, dir.z)
-    group.rotation.y = yaw
+  function setPosition(x, y) {
+    state.x = x
+    state.y = y
+    container.position.set(x, y)
   }
 
   function moveTo(target, duration = 0.55) {
     state.moving = true
-    state.moveFrom.copy(group.position)
-    state.moveTo.copy(target)
+    state.moveFrom = { x: state.x, y: state.y }
+    state.moveTo = { x: target.x, y: target.y }
     state.moveElapsed = 0
     state.moveDuration = Math.max(0.01, duration)
-    faceTowards(target)
+    return new Promise((resolve) => {
+      moveResolve = resolve
+    })
   }
 
   function update(dt) {
@@ -76,49 +54,44 @@ export function createWorker() {
     state.moveElapsed += dt
     const t = Math.min(1, state.moveElapsed / state.moveDuration)
     const ease = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2
-    group.position.lerpVectors(state.moveFrom, state.moveTo, ease)
+    state.x = state.moveFrom.x + (state.moveTo.x - state.moveFrom.x) * ease
+    state.y = state.moveFrom.y + (state.moveTo.y - state.moveFrom.y) * ease
+    container.position.set(state.x, state.y)
     if (t >= 1) {
       state.moving = false
+      const resolve = moveResolve
+      moveResolve = null
+      resolve?.()
       return true
     }
     return false
   }
 
-  function pick(mesh) {
-    if (!mesh) return
-    state.carrying = mesh
-    hand.add(mesh)
-    mesh.position.set(0, 0, 0)
-    mesh.rotation.set(0, 0, 0)
+  function pick(item) {
+    if (!item) return
+    state.carrying = item
+    if (item.gfx) {
+      carry.addChild(item.gfx)
+      item.gfx.position.set(0, 0)
+    }
   }
 
   function drop() {
-    const mesh = state.carrying
-    if (!mesh) return null
-    hand.remove(mesh)
+    const item = state.carrying
+    if (!item) return null
+    if (item.gfx) carry.removeChild(item.gfx)
     state.carrying = null
-    return mesh
-  }
-
-  function dispose() {
-    body.geometry?.dispose?.()
-    body.material?.dispose?.()
-    head.geometry?.dispose?.()
-    head.material?.dispose?.()
-    eyeGeo.dispose?.()
-    eyeMat.dispose?.()
+    return item
   }
 
   return {
-    group,
-    hand,
     state,
+    container,
     setPosition,
     moveTo,
     update,
     pick,
     drop,
-    dispose,
+    dispose: () => container.destroy({ children: true }),
   }
 }
-

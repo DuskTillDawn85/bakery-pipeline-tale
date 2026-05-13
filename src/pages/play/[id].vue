@@ -31,19 +31,21 @@ function getSceneFactory() {
 onMounted(() => {
   const factory = getSceneFactory()
   if (!containerRef.value || !factory) return
-  app = createGameApp(containerRef.value, factory)
-  overlayApiRef.value = app.sceneCtl.api
-  off = overlayApiRef.value.onStateChange((s) => {
-    if (s.status !== 'finished' || s.result !== 'success') return
-    const current = levelNumber.value
-    if (!Number.isFinite(current)) return
-    const nextUnlocked = Math.min(2, current + 1)
-    const saved = localStorage.getItem('bakery-max-level')
-    const savedNum = saved ? parseInt(saved, 10) : 1
-    const target = Math.max(savedNum, nextUnlocked)
-    localStorage.setItem('bakery-max-level', String(target))
+  Promise.resolve(createGameApp(containerRef.value, factory)).then((created) => {
+    app = created
+    overlayApiRef.value = app.sceneCtl.api
+    off = overlayApiRef.value.onStateChange((s) => {
+      if (s.status !== 'finished' || s.result !== 'success') return
+      const current = levelNumber.value
+      if (!Number.isFinite(current)) return
+      const nextUnlocked = Math.min(2, current + 1)
+      const saved = localStorage.getItem('bakery-max-level')
+      const savedNum = saved ? parseInt(saved, 10) : 1
+      const target = Math.max(savedNum, nextUnlocked)
+      localStorage.setItem('bakery-max-level', String(target))
+    })
+    app.start()
   })
-  app.start()
 })
 
 onBeforeUnmount(() => {
