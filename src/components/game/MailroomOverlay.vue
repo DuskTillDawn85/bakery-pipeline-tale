@@ -6,6 +6,14 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  title: {
+    type: String,
+    default: '收发室',
+  },
+  mission: {
+    type: String,
+    default: '目标：把输入传送带上的所有原料搬到输出传送带。',
+  },
 })
 
 const availableOps = computed(() => [
@@ -62,6 +70,11 @@ function removeStep(stepId) {
   steps.value = steps.value.filter((s) => s.id !== stepId)
 }
 
+function clearProgram() {
+  if (state.value.status !== 'idle') return
+  steps.value = []
+}
+
 const programOps = computed(() => steps.value.map((s) => s.op))
 
 function play() {
@@ -71,6 +84,7 @@ function play() {
 
 function reset() {
   props.api.reset()
+  clearProgram()
 }
 </script>
 
@@ -78,14 +92,14 @@ function reset() {
   <div class="overlay">
     <div class="overlay__panel">
       <div class="panel__header">
-        收发室
+        {{ title }}
       </div>
       <div class="panel__body">
         <div class="panel__tip">
           将命令拖动到此区域来编写程序。
         </div>
         <div class="panel__mission">
-          目标：把输入传送带上的所有原料搬到输出传送带。
+          {{ mission }}
         </div>
 
         <div class="panel__palette">
@@ -173,6 +187,9 @@ function reset() {
         </button>
         <button class="control" type="button" :disabled="state.status === 'running'" @click="reset">
           重置
+        </button>
+        <button class="control" type="button" :disabled="state.status !== 'idle'" @click="clearProgram">
+          清空
         </button>
       </div>
     </div>
