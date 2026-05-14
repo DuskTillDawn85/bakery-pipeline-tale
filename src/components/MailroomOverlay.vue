@@ -14,10 +14,6 @@ const props = defineProps({
     type: String,
     default: '收发室',
   },
-  mission: {
-    type: String,
-    default: '目标：把输入传送带上的所有原料搬到输出传送带。',
-  },
 })
 
 const availableOps = computed(() => {
@@ -107,7 +103,7 @@ function reset() {
           将命令拖动到此区域来编写程序。
         </div>
         <div class="panel__mission">
-          {{ mission }}
+          目标：把输入传送带上的所有原料搬到输出传送带。
         </div>
 
         <div class="panel__palette">

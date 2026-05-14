@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { createGameApp } from '~/game/runtime/createGameApp'
 import { createLevel1Scene } from '~/game/scenes/level1/createLevel1Scene'
 import { createLevel2Scene } from '~/game/scenes/level2/createLevel2Scene'
-import MailroomOverlay from '~/components/game/MailroomOverlay.vue'
+import MailroomOverlay from '~/components/MailroomOverlay.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -69,7 +69,6 @@ const goBack = () => {
         class="play__panel"
         :api="overlayApiRef"
         :title="levelTitle"
-        :mission="`目标：把输入传送带上的所有原料搬到输出传送带。`"
       />
     </div>
     <button class="play__back" type="button" @click="goBack">

@@ -5,16 +5,14 @@ export function createWorker() {
   const container = new Container()
 
   const body = new Graphics()
-  body.beginFill(0xffffff, 1)
-  body.drawCircle(0, 0, 0.24)
-  body.endFill()
+  body.circle(0, 0, 0.25)
+      .fill({ color: 0xffffff, alpha: 1 })
   container.addChild(body)
 
   const eyes = new Graphics()
-  eyes.beginFill(0x111827, 1)
-  eyes.drawCircle(-0.07, -0.05, 0.03)
-  eyes.drawCircle(0.07, -0.05, 0.03)
-  eyes.endFill()
+  eyes.circle(-0.07, -0.05, 0.03)
+      .circle(0.07, -0.05, 0.03)
+      .fill({ color: 0x111827, alpha: 1 })
   container.addChild(eyes)
 
   const carry = new Container()

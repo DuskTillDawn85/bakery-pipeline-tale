@@ -5,11 +5,7 @@ import { createEmitter } from '../../core/createEmitter'
 import { OP } from '../../gameplay/ops'
 
 function createText(text, style) {
-  try {
-    return new Text(text, style)
-  } catch {
-    return new Text({ text, style })
-  }
+  return new Text({ text, style })
 }
 
 function createMailroomView(app, options) {
@@ -38,10 +34,8 @@ function createMailroomView(app, options) {
   }
 
   const background = new Graphics()
-  background.beginFill(0xf3e6d3, 1)
-  background.lineStyle(0.06, 0x000000, 0.18)
-  background.drawRoundedRect(-roomWidth / 2, -roomDepth / 2, roomWidth, roomDepth, 0.35)
-  background.endFill()
+  background.roundRect(-roomWidth / 2, -roomDepth / 2, roomWidth, roomDepth, 0.35)
+  background.fill({ color: 0xf3e6d3, alpha: 1 })
   world.addChild(background)
 
   const inboxBelt = createConveyorBelt({

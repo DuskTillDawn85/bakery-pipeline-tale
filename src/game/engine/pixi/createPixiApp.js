@@ -6,29 +6,17 @@ export async function createPixiApp(container, options) {
   const dpr = Math.min(options?.dpr ?? (window.devicePixelRatio || 1), 1.5)
 
   let app = null
-  const supportsInit = typeof Application?.prototype?.init === 'function'
-  if (supportsInit) {
-    app = new Application()
-    await app.init({
-      width,
-      height,
-      antialias: true,
-      backgroundAlpha: 0,
-      resolution: dpr,
-      autoDensity: true,
-    })
-  } else {
-    app = new Application({
-      width,
-      height,
-      antialias: true,
-      backgroundAlpha: 0,
-      resolution: dpr,
-      autoDensity: true,
-    })
-  }
+  app = new Application()
+  await app.init({
+    width,
+    height,
+    antialias: true,
+    backgroundAlpha: 0,
+    resolution: dpr,
+    autoDensity: true,
+  })
 
-  const view = app.canvas ?? app.view
+  const view = app.canvas
   view.style.width = '100%'
   view.style.height = '100%'
   view.style.display = 'block'

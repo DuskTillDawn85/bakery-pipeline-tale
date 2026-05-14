@@ -14,16 +14,14 @@ export function createConveyorBelt(options) {
   const container = new Container()
 
   const base = new Graphics()
-  base.beginFill(color, 1)
-  base.drawRoundedRect(-width / 2, -depth / 2, width, depth, 0.12)
-  base.endFill()
+  base.rect(-width / 2, -depth / 2, width, depth, 0.12)
+      .fill({color})
   container.addChild(base)
 
   const rails = new Graphics()
-  rails.beginFill(railColor, 1)
-  rails.drawRect(-width / 2, -depth / 2 - 0.08, width, 0.08)
-  rails.drawRect(-width / 2, depth / 2, width, 0.08)
-  rails.endFill()
+  rails.rect(-width / 2, -depth / 2 - 0.08, width, 0.08)
+       .rect(-width / 2, depth / 2, width, 0.08)
+       .fill({ color: railColor })
   container.addChild(rails)
 
   const itemsContainer = new Container()
@@ -59,9 +57,7 @@ export function createConveyorBelt(options) {
 
   function createItemGfx(item) {
     const gfx = new Graphics()
-    gfx.beginFill(item.color ?? 0xffffff, 1)
-    gfx.drawRoundedRect(-0.18, -0.18, 0.36, 0.36, 0.08)
-    gfx.endFill()
+    gfx.roundRect(-0.18, -0.18, 0.36, 0.36, 0.08).fill({ color: item.color ?? 0xffffff, alpha: 1 })
     return gfx
   }
 
